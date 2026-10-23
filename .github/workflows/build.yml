@@ -50,20 +50,16 @@ jobs:
           "$AAPT" dump badging "$APK" | head -n 10
           sha256sum "$APK"
 
+      
       - name: Verify APK signature
         run: |
+          set -e
           APK="build/app/outputs/flutter-apk/app-release.apk"
-
-          echo "Verifying APK signature..."
-
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
 
-          if [ -z "$APKSIGNER" ]; then
-            echo "ERROR: apksigner tool was not found"
-            exit 1
-          fi
-
+          echo "Checking APK signature..."
           "$APKSIGNER" verify --verbose --print-certs "$APK"
+
 
           echo "APK signature verification finished."
 
