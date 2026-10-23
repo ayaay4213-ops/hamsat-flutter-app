@@ -22,6 +22,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
       - name: Generate Android files
         run: flutter create --platforms=android --project-name hamsat .
@@ -34,12 +35,22 @@ jobs:
 
       - name: Check APK
         run: |
-          ls -lh build/app/outputs/flutter-apk/
-          file build/app/outputs/flutter-apk/app-release.apk
-          aapt dump badging build/app/outputs/flutter-apk/app-release.apk | head -n 5
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          echo "Checking APK file..."
+          ls -lh "$APK"
+          file "$APK"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          if [ -z "$AAPT" ]; then
+            echo "ERROR: aapt tool was not found"
+            exit 1
+          fi
+          "$AAPT" dump badging "$APK" | head -n 10
+          sha256sum "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: hamsat-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 7
