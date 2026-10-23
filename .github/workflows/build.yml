@@ -1,3 +1,4 @@
+
 name: Build Hamsat APK
 
 on:
@@ -29,14 +30,16 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Build Debug APK
+        run: flutter build apk --debug
 
       - name: Check APK
         run: |
-          APK="build/app/outputs/flutter-apk/app-release.apk"
+          set -e
+          APK="build/app/outputs/flutter-apk/app-debug.apk"
 
           echo "Checking APK file..."
+          test -f "$APK"
           ls -lh "$APK"
           file "$APK"
 
@@ -50,23 +53,23 @@ jobs:
           "$AAPT" dump badging "$APK" | head -n 10
           sha256sum "$APK"
 
-      
       - name: Verify APK signature
         run: |
           set -e
-          APK="build/app/outputs/flutter-apk/app-release.apk"
+          APK="build/app/outputs/flutter-apk/app-debug.apk"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
 
-          echo "Checking APK signature..."
+          if [ -z "$APKSIGNER" ]; then
+            echo "ERROR: apksigner tool was not found"
+            exit 1
+          fi
+
           "$APKSIGNER" verify --verbose --print-certs "$APK"
-
-
-          echo "APK signature verification finished."
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: hamsat-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: hamsat-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 7
