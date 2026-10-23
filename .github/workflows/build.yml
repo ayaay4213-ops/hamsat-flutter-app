@@ -1,3 +1,4 @@
+
 name: Build Hamsat APK
 
 on:
@@ -11,6 +12,12 @@ jobs:
       - name: Get source code
         uses: actions/checkout@v4
 
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -23,10 +30,16 @@ jobs:
         run: flutter pub get
 
       - name: Build APK
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release
+
+      - name: Check APK
+        run: |
+          ls -lh build/app/outputs/flutter-apk/
+          file build/app/outputs/flutter-apk/app-release.apk
+          aapt dump badging build/app/outputs/flutter-apk/app-release.apk | head -n 5
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: hamsat-apk
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
